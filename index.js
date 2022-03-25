@@ -63,6 +63,8 @@ let dones = []
 let hrs,mns,scs
 let starttime = false
 let timerfunc
+let perfectwords
+let perfectdeath = -1
 
 const hashStr = str => {
   let h1 = 0xdeadbeef+n+(mode == "perfect" ? 20000 : (mode == "speed" ? 10000 : 0)), h2 = 0x41c6ce57+day+(rand ? 1000000 : 0);
@@ -128,6 +130,9 @@ const setWords = () => {
     }
     
     const getlist = len => {
+      if (len === 1) {
+        return [words[0]]
+      }
       for (let start = 0; start < 2315; start++) {
         const words = [answers.slice(start).concat(answers.slice(0,start))]
         const lst = [words[0][0]]
@@ -161,12 +166,14 @@ const setWords = () => {
       return null
     }
     const lst = getlist(n)
-    console.log(lst)
-    const start = lst[0]
-    const rest = lst.slice(1)
-    rest.sort((i,j) => hashStr(i+"a")-hashStr(j+"a"))
+    perfectwords = lst
+    console.log(n,lst)
+    // const start = lst[0]
+    // const rest = lst.slice(1)
+    // lst.sort((i,j) => hashStr(i+"a")-hashStr(j+"a"))
     // console.log([start,...rest])
-    words = [start,...rest]
+    words = getlist(n)
+    words.sort((i,j) => hashStr(i+"a")-hashStr(j+"a"))
   }
   setUp()
 }
@@ -332,6 +339,7 @@ const setTime = () => {
 }
 
 const addSection = () => {
+  let gotone = false
   for (let i = 0; i < n; i++) {
     if (!!dones[i]) {
       continue
@@ -357,6 +365,7 @@ const addSection = () => {
     }
     if (count === 5) {
       dones[i] = wind + 1
+      gotone = true
     }
     for (let c of words[i].split("")) {
       for (let j = 0; j < 5; j++) {
@@ -368,6 +377,20 @@ const addSection = () => {
           wedge.classList.add("yellow")
         }
       }
+    }
+  }
+  if (!gotone && mode === "perfect" && perfectdeath === -1) {
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < 5; j++) {
+        document.getElementById(`l-${wind}-${i}-${j}`).classList.add("death")
+      }
+    }
+    perfectdeath = wind
+    for (let word of perfectwords.slice(wind-1)) {
+      for (let c of word) {
+        presskey(c,false)
+      }
+      presskey("Enter",false)
     }
   }
   wind += 1
@@ -440,13 +463,11 @@ const presskey = (c,save=true,perfectstart=true) => {
     }
     word = (new Array(5)).fill(0).map((_,j)=>document.getElementById(`l-${wind}-${i}-${j}`).innerHTML).join("")
     if (c === "Enter") {
-      if (lind === 5) {
-        if (allowed.has(word.toLowerCase())) {
-          addSection()
-          if (save) {
-            const currsaved = window.localStorage.getItem(`saved-${mode}${rand ? "-rand" : ""}-${n}`)
-            window.localStorage.setItem(`saved-${mode}${rand ? "-rand" : ""}-${n}`,currsaved+word+",")
-          }
+      if (lind === 5 && allowed.has(word.toLowerCase())) {
+        addSection()
+        if (save) {
+          const currsaved = window.localStorage.getItem(`saved-${mode}${rand ? "-rand" : ""}-${n}`)
+          window.localStorage.setItem(`saved-${mode}${rand ? "-rand" : ""}-${n}`,currsaved+word+",")
         }
       }
     } else if ("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM".split("").includes(c)) {
@@ -557,7 +578,7 @@ const setUp = () => {
     presskey(c)
   })
   if (mode == "perfect") {
-    for (let c of words[0]) {
+    for (let c of perfectwords[0]) {
       presskey(c,false,false)
     }
   }

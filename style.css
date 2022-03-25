@@ -84,10 +84,13 @@ body {
   background-color: var(--yellow);
 }
 
+.letter.death {
+  background-color: #ff3333;
+}
+
 .letter.black {
   background-color: black;
 }
-
 
 .letter.red {
   color: red;

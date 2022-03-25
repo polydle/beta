@@ -84,6 +84,11 @@ body {
   background-color: var(--yellow);
 }
 
+.letter.black {
+  background-color: black;
+}
+
+
 .letter.red {
   color: red;
 }

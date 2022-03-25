@@ -79,6 +79,95 @@ const hashStr = str => {
 const setWords = () => {
   answers.sort((i,j) => hashStr(i)-hashStr(j))
   words = answers.slice(0,n)
+  if (mode == "perfect") {
+    const getclue = (w1,w2) => {
+      d1 = {}
+      const out = [0,0,0,0,0]
+      let out2 = 0
+      const powers = [1,3,9,27,81]
+      for (let i = 0; i < 5; i++) {
+        const c1 = w1[i]
+        const c2 = w2[i]
+        if (c1 == c2) {
+          out2 += 2*powers[i]
+          out[i] = 2
+        } else {
+          if (!!d1[c1]) {
+            d1[c1] += 1
+          } else {
+            d1[c1] = 1
+          }
+        }
+      }
+      for (let i = 0; i < 5; i++) {
+        const c2 = w2[i]
+        if (!!d1[c2] && !out[i]) {
+          out2 += powers[i]
+          out[i] = 1
+          d1[c2] -= 1
+        }
+      }
+      return out2
+    }
+    
+    const canbe = (clues,ws) => {
+      let tot = 0
+      for (let w2 of answers) {
+        if (clues.every((c,i) => c == getclue(w2,ws[i]))) {
+          if (!!tot) {
+            return false
+          }
+          tot++
+        }
+      }
+      if (!tot) {
+        console.log(clues,ws)
+        return undefined.hi
+      }
+      return true
+    }
+    
+    const getlist = len => {
+      for (let start = 0; start < 2315; start++) {
+        const words = [answers.slice(start).concat(answers.slice(0,start))]
+        const lst = [words[0][0]]
+        let i = 1
+        let wordsidx = 0
+        for (let k = 0; k < 4; k++) {
+          while (words[wordsidx].length > 0) {
+            const leftovers = []
+            for (; i < words[wordsidx].length; i++) {
+              const w = words[wordsidx][i]
+              if (canbe(lst.map(w2 => getclue(w,w2)),lst)) {
+                lst.push(w)
+                if (lst.length == len) {
+                  return lst
+                }
+                leftovers.push(...words[wordsidx].slice(i+1))
+                break
+              } else {
+                leftovers.push(w)
+              }
+            }
+            if (lst.length >= 100) {
+              return lst.concat(leftovers.slice(0,len-100))
+            }
+            i = 0
+            words.push(leftovers)
+            wordsidx++
+          }
+        }
+      }
+      return null
+    }
+    const lst = getlist(n)
+    console.log(lst)
+    const start = lst[0]
+    const rest = lst.slice(1)
+    rest.sort((i,j) => hashStr(i+"a")-hashStr(j+"a"))
+    // console.log([start,...rest])
+    words = [start,...rest]
+  }
   setUp()
 }
 
@@ -115,11 +204,11 @@ const setWordsUp = () => {
 
 const getSectionString = j => (
   (new Array(n)).fill(0).map((_,i)=>`<div id="w-${j}-${i}" class="word${i ? "" : " first"}">
-  <div id="l-${j}-${i}-0" class="letter l1"></div>
-  <div id="l-${j}-${i}-1" class="letter l2"></div>
-  <div id="l-${j}-${i}-2" class="letter l3"></div>
-  <div id="l-${j}-${i}-3" class="letter l4"></div>
-  <div id="l-${j}-${i}-4" class="letter l5"></div>
+  <div id="l-${j}-${i}-0" class="letter l1${dones[i] ? " black" : ""}"></div>
+  <div id="l-${j}-${i}-1" class="letter l2${dones[i] ? " black" : ""}"></div>
+  <div id="l-${j}-${i}-2" class="letter l3${dones[i] ? " black" : ""}"></div>
+  <div id="l-${j}-${i}-3" class="letter l4${dones[i] ? " black" : ""}"></div>
+  <div id="l-${j}-${i}-4" class="letter l5${dones[i] ? " black" : ""}"></div>
 </div>`).join("\n")
 )
 
@@ -288,14 +377,14 @@ const addSection = () => {
     if (!rand) {
       setInterval(setTime,100)
     }
-    if (mode == "speed") {
-      const endtime = window.localStorage.getItem(`endtime${rand ? "-rand" : ""}-${n}`)
+    if (mode == "speed" || mode == "perfect") {
+      const endtime = window.localStorage.getItem(`endtime-${mode}${rand ? "-rand" : ""}-${n}`)
       if (!!endtime && !isNaN(endtime)) {
         updateSpeedTime(new Date(parseInt(endtime)))
       } else {
         const d = new Date()
         updateSpeedTime(d)
-        window.localStorage.setItem(`endtime${rand ? "-rand" : ""}-${n}`,d.getTime())
+        window.localStorage.setItem(`endtime-${mode}${rand ? "-rand" : ""}-${n}`,d.getTime())
       }
       clearInterval(timerfunc)
     }
@@ -334,13 +423,13 @@ const startspeedmode = () => {
   timerfunc = setInterval(updateSpeedTime,10)
 }
 
-const presskey = (c,save=true) => {
+const presskey = (c,save=true,perfectstart=true) => {
   if (won) {
     return
   }
-  if (mode == "speed" && !starttime) {
+  if ((mode == "speed" || (mode == "perfect" && perfectstart)) && !starttime) {
     starttime = new Date()
-    window.localStorage.setItem(`starttime${rand ? "-rand" : ""}-${n}`,starttime.getTime())
+    window.localStorage.setItem(`starttime-${mode}${rand ? "-rand" : ""}-${n}`,starttime.getTime())
     startspeedmode()
   }
   let add = 0
@@ -401,8 +490,8 @@ const presskey = (c,save=true) => {
 
 const copy = () => {
   const aux = document.createElement("textarea");
-  let s = `${rand ? "Random" : "Daily"} ${mode === "speed" ? "Speed " : ""}${n}-dle${rand ? "" : ` #${pad(day.toString(),4)}`}\n`
-  if (mode === "speed") {
+  let s = `${rand ? "Random" : "Daily"} ${mode === "speed" ? "Speed " : mode === "perfect" ? "Perfect" : ""}${n}-dle${rand ? "" : ` #${pad(day.toString(),4)}`}\n`
+  if (mode === "speed" || mode === "perfect") {
     s += document.getElementById("timer").innerHTML + "\n"
   }
   s += `${Math.max(...dones)} : ${dones.join("&")}\npolydle.github.io/?${mode}/${rand ? "random" : "daily"}/${n}${rand ? "/"+day : ""}`
@@ -467,18 +556,26 @@ const setUp = () => {
     event.preventDefault()
     presskey(c)
   })
+  if (mode == "perfect") {
+    for (let c of words[0]) {
+      presskey(c,false,false)
+    }
+  }
   const prev = window.localStorage.getItem(rand ? "prevrand" : "prevday")
   if (parseInt(prev) !== day) {
     window.localStorage.setItem(rand ? "prevrand" : "prevday",day)
     for (let i = 1; i < 2316; i++) {
       window.localStorage.removeItem(`saved-classic${rand ? "-rand" : ""}-${i}`)
       window.localStorage.removeItem(`saved-speed${rand ? "-rand" : ""}-${i}`)
-      window.localStorage.removeItem(`starttime${rand ? "-rand" : ""}-${i}`)
-      window.localStorage.removeItem(`endtime${rand ? "-rand" : ""}-${i}`)
+      window.localStorage.removeItem(`saved-perfect${rand ? "-rand" : ""}-${i}`)
+      window.localStorage.removeItem(`starttime-speed${rand ? "-rand" : ""}-${i}`)
+      window.localStorage.removeItem(`endtime-speed${rand ? "-rand" : ""}-${i}`)
+      window.localStorage.removeItem(`starttime-perfect${rand ? "-rand" : ""}-${i}`)
+      window.localStorage.removeItem(`endtime-perfect${rand ? "-rand" : ""}-${i}`)
     }
   } else {
-    if (mode === "speed") {
-      const currtime = window.localStorage.getItem(`starttime${rand ? "-rand" : ""}-${n}`)
+    if (mode === "speed" || mode === "perfect") {
+      const currtime = window.localStorage.getItem(`starttime-${mode}${rand ? "-rand" : ""}-${n}`)
       if (!!currtime && !isNaN(currtime)) {
         starttime = new Date(parseInt(currtime))
         startspeedmode()
@@ -494,7 +591,7 @@ const setUp = () => {
   if (!window.localStorage.getItem(`saved-${mode}${rand ? "-rand" : ""}-${n}`)) {
     window.localStorage.setItem(`saved-${mode}${rand ? "-rand" : ""}-${n}`,"")
   }
-  if (mode === "speed") {
+  if (mode === "speed" || mode === "perfect") {
     document.getElementById("timer").style.display = "flex"
     document.documentElement.style.setProperty('--timer-size', 'var(--timer-tot-height)');
   }

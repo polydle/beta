@@ -365,6 +365,7 @@ svg {
 
 #howto-page {
   display: flex;
+  visibility: hidden;
   position: fixed;
   width: 100vw;
   height: 100vh;

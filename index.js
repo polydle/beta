@@ -640,12 +640,14 @@ const setUp = () => {
 
 const openHowTo = () => {
   const menu = document.getElementById("howto-page")
+  menu.style.visibility = "visible"
   menu.style.top = "0%"
 }
 
 const closeHowTo = () => {
   const menu = document.getElementById("howto-page")
   menu.style.top = "100%"
+  setTimeout(() => menu.style.visibility = "hidden", 1100);
 }
 
 const expandModes = (mode) => {

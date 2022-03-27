@@ -129,11 +129,11 @@ const setWords = () => {
           tot++
         }
       }
-      if (!tot) {
-        console.log(clues,ws)
-        return undefined.hi
-      }
-      return true
+      // if (!tot) {
+      //   console.log(clues,ws)
+      //   return undefined.hi
+      // }
+      return !!tot
     }
     
     const getlist = len => {
@@ -174,7 +174,7 @@ const setWords = () => {
     }
     const lst = getlist(n)
     perfectwords = lst
-    console.log(n,lst)
+    // console.log(n,lst)
     // const start = lst[0]
     // const rest = lst.slice(1)
     // lst.sort((i,j) => hashStr(i+"a")-hashStr(j+"a"))
@@ -360,7 +360,7 @@ const addSection = () => {
     for (let j = 0; j < 5; j++) {
       const letter = document.getElementById(`l-${wind}-${i}-${j}`)
       const c = letter.innerHTML.toLowerCase()
-      if (!i) {
+      if (word.length < 5) {
         word += c
       }
       const wedge = document.getElementById(`key-${c}-${i}`)
@@ -391,6 +391,7 @@ const addSection = () => {
     }
   }
   if (!gotone && mode === "perfect") {
+    // console.log(word)
     if (uniques.has(word)) {
       for (let i = 0; i < n; i++) {
         for (let j = 0; j < 5; j++) {

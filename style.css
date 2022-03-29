@@ -621,7 +621,7 @@ b.gr {
   --keyboard-height: calc(calc(var(--box-width) + 2px) * 3);
   --share-height: calc(var(--box-width) * 1.45);
   --title-height: calc(var(--box-width) * 1.25);
-  --title-margin-top: calc(calc(var(--mode-height) - 4px));
+  --title-margin-top: 0px;
   --title2-font-size: calc(var(--text-font-size) * 2);
   --title-translate: calc(var(--box-width) * 0.12);
   --subtitle-font-size: calc(var(--text-font-size) * 0.75);
